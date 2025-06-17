@@ -4,17 +4,19 @@ import java.util.List;
 
 public class Login {
 
+    // User details
     private String firstName;
     private String lastName;
     private String username;
     private String password;
     private String phoneNumber;
 
-    // Added static lists to hold messages for this session
+    // Lists to hold messages by status
     private static ArrayList<Message> sentMessages = new ArrayList<>();
     private static ArrayList<Message> storedMessages = new ArrayList<>();
     private static ArrayList<Message> disregardedMessages = new ArrayList<>();
 
+    // Constructor to set user details
     public Login(String firstName, String lastName, String username, String password, String phoneNumber) {
         this.firstName = firstName;
         this.lastName = lastName;
@@ -23,10 +25,12 @@ public class Login {
         this.phoneNumber = phoneNumber;
     }
 
+    // Check if username contains underscore and max length 5
     public boolean checkUserName() {
         return username.contains("_") && username.length() <= 5;
     }
 
+    // Check password complexity rules
     public boolean checkPasswordComplexity() {
         boolean hasUppercase = !password.equals(password.toLowerCase());
         boolean hasNumber = password.matches(".*\\d.*");
@@ -35,11 +39,13 @@ public class Login {
         return hasUppercase && hasNumber && hasSpecialChar && isLongEnough;
     }
 
+    // Validate phone number format +27 followed by 9 digits
     public boolean checkCellPhoneNumber() {
         String regex = "\\+27\\d{9}";
         return phoneNumber.matches(regex);
     }
 
+    // Register user if all validations pass, else return error messages
     public String registerUser() {
         if (!checkUserName()) {
             return "Username is not correctly formatted. It must contain an underscore and be no more than 5 characters.";
@@ -53,6 +59,7 @@ public class Login {
         return "Registration successful.";
     }
 
+    // Check login credentials against stored user data
     public boolean loginUser(String enteredUsername, String enteredPassword, String enteredPhoneNumber) {
         return this.username.equals(enteredUsername) &&
                 this.password.equals(enteredPassword) &&
@@ -60,18 +67,14 @@ public class Login {
     }
 
     public static void main(String[] args) {
-        // Your existing registration and login code...
-
-        // ... After successful login:
-        // (reused from your code with some expansions)
-
+        // Register new user with input dialogs
         Login user = getUserRegistration();
-
         if (user == null) {
             JOptionPane.showMessageDialog(null, "Registration failed or cancelled.");
             System.exit(0);
         }
 
+        // Allow max 3 login attempts
         int loginAttempts = 0;
         boolean loggedIn = false;
 
@@ -80,6 +83,7 @@ public class Login {
             String loginPassword = JOptionPane.showInputDialog("Login - Enter password:");
             String loginPhone = JOptionPane.showInputDialog("Login - Enter phone number:");
 
+            // Validate login credentials
             if (user.loginUser(loginUsername, loginPassword, loginPhone)) {
                 JOptionPane.showMessageDialog(null, "Welcome " + user.firstName + " " + user.lastName + "! It is great to see you again.");
                 loggedIn = true;
@@ -90,23 +94,25 @@ public class Login {
             }
         }
 
+        // If login fails after 3 attempts, ask to restart registration or quit
         if (!loggedIn) {
             int option = JOptionPane.showConfirmDialog(null, "Too many failed attempts. Restart registration?", "Login Failed", JOptionPane.YES_NO_OPTION);
             if (option == JOptionPane.YES_OPTION) {
-                main(null);
+                main(null); // Restart program
             } else {
                 JOptionPane.showMessageDialog(null, "Exiting. Goodbye!");
                 System.exit(0);
             }
         }
 
-        // User logged in, welcome and show main menu
+        // Display welcome message after successful login
         JOptionPane.showMessageDialog(null, "Welcome to QuickChat.");
 
+        // Ask how many messages user wants to send
         int messagesToSend = getPositiveIntInput("How many messages would you like to send?");
+        int messagesSentCount = 0; // Counter for sent messages
 
-        int messagesSentCount = 0;
-
+        // Main menu loop
         while (true) {
             String menu = "Select an option:\n"
                     + "1) Send Messages\n"
@@ -114,14 +120,17 @@ public class Login {
                     + "3) Search messages by recipient\n"
                     + "4) Delete message by hash\n"
                     + "5) Display sent message report\n"
-                    + "6) Quit";
+                    + "6) Show longest sent message\n"
+                    + "7) Search message by Message ID\n"
+                    + "8) Search all messages sent to a recipient\n"
+                    + "9) Quit";
 
             String option = JOptionPane.showInputDialog(menu);
-
             if (option == null) break;
 
             switch (option) {
                 case "1":
+                    // Sending messages loop up to number user specified
                     for (int i = 0; i < messagesToSend; i++) {
                         String recipient = getRecipientInput();
                         if (recipient == null) break;
@@ -133,6 +142,7 @@ public class Login {
 
                         Message msg = new Message(messageID, recipient, messageText);
 
+                        // Validate generated message ID and recipient number
                         if (!msg.checkMessageID()) {
                             JOptionPane.showMessageDialog(null, "Invalid message ID generated. Try again.");
                             i--;
@@ -144,20 +154,21 @@ public class Login {
                             continue;
                         }
 
-                        // Replace your old msg.sentMessage() with logic for sending, storing, disregarding:
+                        // Get user's choice on what to do with the message
                         String userChoice = getUserMessageChoice();
 
+                        // Handle user choice for sending, storing, or disregarding
                         switch (userChoice) {
-                            case "1": // send
+                            case "1": // Send message
                                 sentMessages.add(msg);
                                 messagesSentCount++;
                                 JOptionPane.showMessageDialog(null, getMessageDetails(msg));
                                 break;
-                            case "2": // store
+                            case "2": // Store message
                                 storedMessages.add(msg);
                                 JOptionPane.showMessageDialog(null, "Message stored for later.");
                                 break;
-                            case "3": // disregard
+                            case "3": // Disregard message
                                 disregardedMessages.add(msg);
                                 JOptionPane.showMessageDialog(null, "Message disregarded.");
                                 break;
@@ -226,30 +237,86 @@ public class Login {
                         for (Message m : sentMessages) {
                             report.append("Recipient: ").append(m.getRecipient()).append("\n")
                                     .append("Message: ").append(m.getMessageText()).append("\n")
-                                    .append("Hash: ").append(m.getMessageHash()).append("\n\n");
+                                    .append("Hash: ").append(m.getMessageHash()).append("\n")
+                                    .append("Flag: ").append(m.displayFlags()).append("\n\n");
                         }
                         JOptionPane.showMessageDialog(null, report.toString());
                     }
                     break;
 
-                case "6": // Quit
+                case "6": // Show longest sent message
+                    if (sentMessages.isEmpty()) {
+                        JOptionPane.showMessageDialog(null, "No sent messages to analyze.");
+                    } else {
+                        // Find message with longest length
+                        Message longest = sentMessages.get(0);
+                        for (Message m : sentMessages) {
+                            if (m.getMessageText().length() > longest.getMessageText().length()) {
+                                longest = m;
+                            }
+                        }
+                        JOptionPane.showMessageDialog(null, "Longest Message Details:\n" + getMessageDetails(longest));
+                    }
+                    break;
+
+                case "7": // Search message by Message ID
+                    String searchID = JOptionPane.showInputDialog("Enter Message ID to search for:");
+                    if (searchID != null) {
+                        Message foundMsg = null;
+                        for (Message m : sentMessages) {
+                            if (m.getMessageID().equalsIgnoreCase(searchID)) {
+                                foundMsg = m;
+                                break;
+                            }
+                        }
+                        if (foundMsg == null) {
+                            JOptionPane.showMessageDialog(null, "No message found with ID: " + searchID);
+                        } else {
+                            JOptionPane.showMessageDialog(null, "Message found:\nRecipient: " + foundMsg.getRecipient() + "\nMessage: " + foundMsg.getMessageText());
+                        }
+                    }
+                    break;
+
+                case "8": // Search all messages sent to a recipient
+                    String recipientToSearch = JOptionPane.showInputDialog("Enter recipient to search messages for:");
+                    if (recipientToSearch != null) {
+                        List<Message> messagesForRecipient = new ArrayList<>();
+                        for (Message m : sentMessages) {
+                            if (m.getRecipient().equalsIgnoreCase(recipientToSearch)) {
+                                messagesForRecipient.add(m);
+                            }
+                        }
+                        if (messagesForRecipient.isEmpty()) {
+                            JOptionPane.showMessageDialog(null, "No messages found for recipient: " + recipientToSearch);
+                        } else {
+                            StringBuilder messagesList = new StringBuilder("Messages for " + recipientToSearch + ":\n");
+                            for (Message m : messagesForRecipient) {
+                                messagesList.append("- ").append(m.getMessageText()).append("\n");
+                            }
+                            JOptionPane.showMessageDialog(null, messagesList.toString());
+                        }
+                    }
+                    break;
+
+                case "9": // Quit the program
                     JOptionPane.showMessageDialog(null, "Goodbye!");
                     System.exit(0);
                     break;
 
-                default:
-                    JOptionPane.showMessageDialog(null, "Invalid option. Please enter a number between 1 and 6.");
+                default: // Invalid menu input
+                    JOptionPane.showMessageDialog(null, "Invalid option. Please enter a number between 1 and 9.");
             }
         }
     }
 
+    // Helper method to get user registration inputs and validate
     private static Login getUserRegistration() {
-        // Registration input code extracted here for clarity
         String firstName = JOptionPane.showInputDialog("Enter your first name:");
         if (firstName == null) return null;
         String lastName = JOptionPane.showInputDialog("Enter your last name:");
         if (lastName == null) return null;
 
+        // Loop until valid username entered
         String username;
         while (true) {
             username = JOptionPane.showInputDialog("Enter username (must contain '_' and be <= 5 characters):");
@@ -259,6 +326,7 @@ public class Login {
             else JOptionPane.showMessageDialog(null, "Username must contain an underscore and be max 5 characters.");
         }
 
+        // Loop until valid password entered
         String password;
         while (true) {
             password = JOptionPane.showInputDialog("Enter password (8+ chars, uppercase, number, special char):");
@@ -268,6 +336,7 @@ public class Login {
             else JOptionPane.showMessageDialog(null, "Password must be at least 8 characters, contain uppercase, number and special character.");
         }
 
+        // Loop until valid phone number entered
         String phoneNumber;
         while (true) {
             phoneNumber = JOptionPane.showInputDialog("Enter phone number (e.g. +27838968976):");
@@ -281,18 +350,20 @@ public class Login {
         String registrationMessage = user.registerUser();
         JOptionPane.showMessageDialog(null, registrationMessage);
 
+        // Return null if registration failed
         if (!registrationMessage.equals("Registration successful.")) {
             return null;
         }
         return user;
     }
 
+    // Helper method to get positive integer input with validation
     private static int getPositiveIntInput(String prompt) {
         int number = -1;
         while (number <= 0) {
             String input = JOptionPane.showInputDialog(prompt);
             if (input == null) {
-                System.exit(0);
+                System.exit(0); // Exit if user cancels
             }
             try {
                 number = Integer.parseInt(input);
@@ -305,15 +376,17 @@ public class Login {
         return number;
     }
 
+    // Helper method to get valid recipient number input
     private static String getRecipientInput() {
         while (true) {
-            String recipient = JOptionPane.showInputDialog("Enter recipient cell number (max: 12 characters, starts with '+27' or 0 ):");
+            String recipient = JOptionPane.showInputDialog("Enter recipient cell number (max: 12 characters, starts with '+27'):");
             if (recipient == null) return null;
-            if (recipient.length() <= 12 && recipient.startsWith("+27", 0)) return recipient;
-            JOptionPane.showMessageDialog(null, "Recipient number invalid. Must be max 12 digits and start with '+27'or '0'.");
+            if (recipient.length() <= 12 && recipient.startsWith("+27")) return recipient;
+            JOptionPane.showMessageDialog(null, "Recipient number invalid. Must be max 12 digits and start with '+27'.");
         }
     }
 
+    // Helper method to get valid message text input
     private static String getMessageTextInput() {
         while (true) {
             String messageText = JOptionPane.showInputDialog("Enter message (max 50 characters):");
@@ -323,6 +396,7 @@ public class Login {
         }
     }
 
+    // Helper method to get user's choice for message action
     private static String getUserMessageChoice() {
         String choice = JOptionPane.showInputDialog(
                 "Choose an option:\n1) Send message\n2) Store message\n3) Disregard message");
@@ -334,10 +408,12 @@ public class Login {
         return choice;
     }
 
+    // Format message details for display
     private static String getMessageDetails(Message msg) {
         return "Message ID: " + msg.getMessageID() + "\n"
                 + "Message Hash: " + msg.getMessageHash() + "\n"
                 + "Recipient: " + msg.getRecipient() + "\n"
-                + "Message: " + msg.getMessageText();
+                + "Message: " + msg.getMessageText() + "\n"
+                + "Flag: " + msg.getFlag();
     }
 }
