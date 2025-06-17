@@ -138,8 +138,6 @@ public class LoginTest {
 
     @Test
     public void testSendMessage_ReturnsValidChoice() {
-        // Ensure your Message.java has this method:
-        // public String sentMessage() { return "Message sent"; } etc.
         String result = validMessage.sentMessage();
         assertTrue(result.equals("Message sent") || result.equals("Message stored") || result.equals("Message disregarded"));
     }
